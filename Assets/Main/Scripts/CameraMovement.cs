@@ -1,26 +1,47 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraMovement : MonoBehaviour
 {
-    [SerializeField]
-    private Transform _playerPosition;
+    [Header("References")]
+    [SerializeField] private PlayerMovement _playerMovement;
+    [SerializeField] private GameProcess _gameProcess;
 
-    private Vector3 _offset;
+    private Transform _playerTransform;
+    private Vector3 _cameraOffset;
 
     private void Start()
     {
-        _offset = gameObject.transform.position - _playerPosition.position;
-        //gameObject.transform.position
+        // Init variables
+        _playerTransform = _playerMovement.transform;
+        _cameraOffset = transform.position - _playerTransform.position;
+
+        _gameProcess.GameRestarted += StartRewind;
     }
 
     private void Update()
     {
+        TrackPlayer();
+    }
 
-        gameObject.transform.position = new Vector3(_playerPosition.position.x + _offset.x, _offset.y, _offset.z);
-        //gameObject.transform.position = _offset;
-        //gameObject.transform.Translate(new Vector3(_playerPosition.position.x, 0, 0));
-        //gameObject.transform.position = new ;
+    private void TrackPlayer()
+    {
+        Debug.Log("Track!");
+        transform.position = new Vector3(_cameraOffset.x + _playerTransform.position.x, _cameraOffset.y, _cameraOffset.z);
+    }
+
+    private void StartRewind()
+    {
+        Debug.Log("Rewind!");
+        StartCoroutine("Rewind");
+    }
+
+    private IEnumerable Rewind()
+    {
+        for (float lerp = 1.0f; lerp >= 0; lerp -= 0.001f)
+        {
+            transform.position = Vector3.Lerp(transform.position, _playerMovement.StartPosition, lerp);
+            yield return null;
+        }
     }
 }
