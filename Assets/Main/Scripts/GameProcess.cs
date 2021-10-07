@@ -5,8 +5,7 @@ public class GameProcess : MonoBehaviour
 {
     private PlayerInput _playerInput;
 
-    public Action GamePaused;
-    public Action GameStarted;
+    public Action PauseSwitched;
     public Action GameRestarted;
 
     public bool IsPaused { get; private set; }
@@ -20,31 +19,39 @@ public class GameProcess : MonoBehaviour
         
         // Init events
         _playerInput.EscapePressed += SwitchPause;
-        _playerInput.R_Pressed += GameRestarted.Invoke;
-        GamePaused += PauseGame;
-        GameStarted += ResumeGame;
     }
 
-    private void SwitchPause()
+    public void SwitchPause()
     {
         if (IsPaused)
         {
-            GamePaused.Invoke();
+            ResumeGame();
         }
         else
         {
-            GameStarted.Invoke();
+            PauseGame();
         }
-        IsPaused = !IsPaused;
     }
 
     public void PauseGame()
     {
-        Time.timeScale = 0;
+        // If call PauseGame happend but game is already in pause then do nothing. 
+        // Else truly pause game and invoke event PauseSwitched
+        if (!IsPaused)
+        {
+            Time.timeScale = 0;
+            IsPaused = true;
+            PauseSwitched.Invoke();
+        }
     }
 
     public void ResumeGame()
     {
-        Time.timeScale = 1;
+        if (IsPaused)
+        {
+            Time.timeScale = 1;
+            IsPaused = false;
+            PauseSwitched.Invoke();
+        }
     }
 }
