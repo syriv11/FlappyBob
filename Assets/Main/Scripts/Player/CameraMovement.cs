@@ -16,7 +16,7 @@ public class CameraMovement : MonoBehaviour
         _playerTransform = _playerMovement.transform;
         _cameraOffset = transform.position - _playerTransform.position;
 
-        _gameProcess.GameRestarted += StartRewind;
+        _gameProcess.GameEnded += StartRewind;
     }
 
     private void Update()
@@ -33,7 +33,7 @@ public class CameraMovement : MonoBehaviour
     private void StartRewind()
     {
         Debug.Log("Rewind!");
-        StartCoroutine("Rewind");
+        //StartCoroutine("Rewind");
     }
 
     private IEnumerable Rewind()

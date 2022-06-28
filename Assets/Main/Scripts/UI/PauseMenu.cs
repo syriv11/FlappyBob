@@ -8,12 +8,12 @@ public class PauseMenu : MonoBehaviour
 
     public void Resume()
     {
-        _gameProcess.ResumeGame();
+        _gameProcess.SwitchPause();
     }
 
     public void Restart()
     {
-        Resume();
-        _gameProcess.GameRestarted.Invoke();
+        //Resume();
+        _gameProcess.GameEnded.Invoke();
     }
 }

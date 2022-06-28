@@ -10,14 +10,13 @@ public class MenuSwitcher : MonoBehaviour
 
     private void Start()
     {
-        _gameProcess.PauseSwitched += SwitchPauseMenu;
-        _gameProcess.GameRestarted += SwitchStartMenu;
-        SwitchPauseMenu();
+        _gameProcess.GamePauseSwitched += SwitchPauseMenu;
+        //_gameProcess.GameStarted += SwitchStartMenu;
     }
 
     private void SwitchPauseMenu()
     {
-        _pauseMenu.SetActive(_gameProcess.IsPaused);
+        _pauseMenu.SetActive(_gameProcess.CurrentGameState == GameState.Paused ? true : false);
     }
 
     private void SwitchDeathMenu()

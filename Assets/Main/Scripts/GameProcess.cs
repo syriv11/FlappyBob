@@ -1,57 +1,42 @@
 ﻿using UnityEngine;
 using System;
 
+[RequireComponent(typeof(PlayerInput))]
 public class GameProcess : MonoBehaviour
 {
+    [Header("References")]
     private PlayerInput _playerInput;
+    
+    public GameState CurrentGameState;
 
-    public Action PauseSwitched;
-    public Action GameRestarted;
-
-    public bool IsPaused { get; private set; }
+    public Action GameStarted;
+    public Action GameEnded;
+    public Action GamePauseSwitched;
 
     void Start()
     {
-        IsPaused = false;
-
         // Init variables
+        CurrentGameState = GameState.Running;
+        //IsPaused = false;
         _playerInput = gameObject.GetComponent<PlayerInput>();
         
         // Init events
-        _playerInput.EscapePressed += SwitchPause;
+        _playerInput.PausePressed += SwitchPause;
     }
 
     public void SwitchPause()
     {
-        if (IsPaused)
+        if (CurrentGameState == GameState.Paused)
         {
-            ResumeGame();
+            Time.timeScale = 1;
+            CurrentGameState = GameState.Running;
         }
         else
         {
-            PauseGame();
-        }
-    }
-
-    public void PauseGame()
-    {
-        // If call PauseGame happend but game is already in pause then do nothing. 
-        // Else truly pause game and invoke event PauseSwitched
-        if (!IsPaused)
-        {
             Time.timeScale = 0;
-            IsPaused = true;
-            PauseSwitched.Invoke();
+            CurrentGameState = GameState.Paused;
         }
-    }
 
-    public void ResumeGame()
-    {
-        if (IsPaused)
-        {
-            Time.timeScale = 1;
-            IsPaused = false;
-            PauseSwitched.Invoke();
-        }
+        GamePauseSwitched.Invoke();
     }
 }

@@ -21,22 +21,23 @@ public class Player : MonoBehaviour
         IsAlive = true;
 
         // Init events
-        _playerInput.SpacePressed += _playerMovement.Jump;
+        _playerInput.JumpPressed += _playerMovement.Jump;
         PlayerDied += Die;
-        _gameProcess.GameRestarted += ResetPlayer;
+        _gameProcess.GameStarted += Respawn;
     }
 
     private void Update()
     {
-        _playerMovement.Move();
+        if (_gameProcess.CurrentGameState == GameState.Running)
+        {
+            _playerMovement.Move();
+        }
     }
 
-    private void ResetPlayer()
+    private void Respawn()
     {
         IsAlive = true;
         _playerMovement.ResetPosition();
-
-        //_playerInput.SpacePressed += _playerMovement.Jump;
 
         _playerMovement.SetSimulation(true);
     }
@@ -44,8 +45,7 @@ public class Player : MonoBehaviour
     private void Die()
     {
         IsAlive = false;
-
-        //_playerInput.SpacePressed -= _playerMovement.Jump;
+        _gameProcess.GameEnded.Invoke();
 
         _playerMovement.SetSimulation(false);
     }
