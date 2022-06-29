@@ -6,7 +6,7 @@ public class LevelGenerator : MonoBehaviour
 {
 
     [Header("Default parameters")]
-    [SerializeField] private GameObject _obstacle;
+    [SerializeField] private Obstacle _obstacle;
     [SerializeField] private float _obstacleSpacing;
     [SerializeField] private float _obstacleGapSize;
 
@@ -20,11 +20,12 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private GameProcess _gameProcess;
 
     //private GameObject _lastSpawnedObstacle;
-    public Queue<GameObject> _spawnedObstaclesQueue;
+    public Queue<Obstacle> _spawnedObstaclesQueue;
 
     private void Start()
     {
-        _spawnedObstaclesQueue = new Queue<GameObject>();
+        _spawnedObstaclesQueue = new Queue<Obstacle>();
+        Obstacle.SetHeightLimit(_playerCamera.GetCameraOrthographicBounds().max.y);
 
         SpawnInitialObstacles();
         Debug.Log(_spawnedObstaclesQueue.Count);
@@ -52,9 +53,10 @@ public class LevelGenerator : MonoBehaviour
             }
             else // grab the first obstacle and throw it to the end of the queue
             {
-                GameObject obstacle = _spawnedObstaclesQueue.Dequeue();
+                Obstacle obstacle = _spawnedObstaclesQueue.Dequeue();
                 
                 obstacle.transform.position = CalculateNewObstaclePosition();
+                SetObstacleRandomHeight(ref obstacle);
 
                 _spawnedObstaclesQueue.Enqueue(obstacle);
             }
@@ -84,17 +86,25 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    private GameObject SpawnNewObstacle()
+    private Obstacle SpawnNewObstacle()
     {
         Vector3 newObstaclePosition = CalculateNewObstaclePosition();
 
-        GameObject newObstacle = Instantiate(_obstacle, newObstaclePosition, Quaternion.identity);
+        Obstacle newObstacle = Instantiate(_obstacle, newObstaclePosition, Quaternion.identity);
 
         newObstacle.transform.SetParent(gameObject.transform, true);
         _spawnedObstaclesQueue.Enqueue(newObstacle);
 
+        newObstacle.GapSize = _obstacleGapSize;
+        SetObstacleRandomHeight(ref newObstacle);
+
         Debug.Log("SpawnNewObstacle()\n\n", newObstacle);
         return newObstacle;
+    }
+
+    private void SetObstacleRandomHeight(ref Obstacle obstacle)
+    {
+        obstacle.GapHeight = Random.Range(-1.0f, 1.0f);
     }
 
     private Vector3 CalculateNewObstaclePosition()
