@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private Player _player;
     private Rigidbody2D _rigidbody;
 
     [Header("Parameters")]
@@ -10,13 +10,18 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _movementSpeed;
 
     public Vector3 StartPosition { get; private set; }
+    public Quaternion StartRotation { get; private set; }
 
-    private void Start()
+    private void Awake()
     {
-        // Init variables
-        _player = GetComponent<Player>();
+        Init();
+    }
+
+    private void Init()
+    {
         _rigidbody = GetComponent<Rigidbody2D>();
         StartPosition = gameObject.transform.position;
+        StartRotation = gameObject.transform.rotation;
     }
 
     public void Jump()
@@ -45,9 +50,10 @@ public class PlayerMovement : MonoBehaviour
         Debug.DrawLine(transform.position, transform.position + (Vector3)_rigidbody.velocity.normalized, new Color(255, 0, 0));
     }
 
-    public void ResetPosition()
+    public void ResetTransform()
     {
-        _player.transform.position = StartPosition;
+        transform.position = StartPosition;
+        transform.rotation = StartRotation;
         _rigidbody.velocity = Vector2.zero;
     }
 

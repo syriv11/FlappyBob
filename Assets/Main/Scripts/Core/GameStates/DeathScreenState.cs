@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum GameState
+public class DeathScreenState : GameState
 {
-    Running, Paused, DeadScreen, MainMenu
+
 }

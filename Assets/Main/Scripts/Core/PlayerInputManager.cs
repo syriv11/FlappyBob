@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System;
 
-public class PlayerInput : MonoBehaviour
+public class PlayerInputManager : MonoBehaviour
 {
     public Action JumpPressed;
     public Action PausePressed;

@@ -4,47 +4,44 @@ using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
 {
-
-    [Header("Default parameters")]
+    [Header("Obstacle parameters")]
     [SerializeField] private Obstacle _obstacle;
     [SerializeField] private float _obstacleSpacing;
     [SerializeField] private float _obstacleGapSize;
+    [SerializeField] private float _obstacleGapMargin;
 
+    [Header("Generation parameters")]
     [SerializeField] private float _obstacleStartSpawnOffset;
     [SerializeField] private int _initialNumberOfObstacles;
     [SerializeField] private int _maxNumberOfObstacles;
     
 
-    [Header("References")]
-    [SerializeField] private Camera _playerCamera;
-    [SerializeField] private GameProcess _gameProcess;
+    private Camera _playerCamera;
+    private PauseManager _pauseManager;
+    private GameProcess _gameProcess;
 
     //private GameObject _lastSpawnedObstacle;
-    public Queue<Obstacle> _spawnedObstaclesQueue;
+    private Queue<Obstacle> _spawnedObstaclesQueue;
+    private float _firstObstacleStartSpawnPosition;
 
     private void Start()
     {
-        _spawnedObstaclesQueue = new Queue<Obstacle>();
-        Obstacle.SetHeightLimit(_playerCamera.GetCameraOrthographicBounds().max.y);
-
+        Init();
         SpawnInitialObstacles();
-        Debug.Log(_spawnedObstaclesQueue.Count);
     }
 
     private void Update()
     {
-        if (_gameProcess.CurrentGameState == GameState.Running)
-        {
-            Generate();
-        }
+        if (_pauseManager.IsPaused)
+            return;
+
+        Generate();
     }
 
     private void Generate()
     {
-        float cameraRightBorderPosition = _playerCamera.GetCameraOrthographicBounds().max.x;
-
         // If camera has exceeded the point of the (last spawned obstacle - Offset) with it's right border 
-        if (cameraRightBorderPosition > _spawnedObstaclesQueue.Last().transform.position.x)
+        if (GetCameraRightBorderPosition() > _spawnedObstaclesQueue.Last().transform.position.x)
         {
             // If the max number of obstacles isn't exceeded
             if (_spawnedObstaclesQueue.Count < _maxNumberOfObstacles)
@@ -54,68 +51,95 @@ public class LevelGenerator : MonoBehaviour
             else // grab the first obstacle and throw it to the end of the queue
             {
                 Obstacle obstacle = _spawnedObstaclesQueue.Dequeue();
-                
-                obstacle.transform.position = CalculateNewObstaclePosition();
-                SetObstacleRandomHeight(ref obstacle);
+
+                obstacle.transform.position = CalculateObstacleNewPosition();
+                obstacle.Refresh();
 
                 _spawnedObstaclesQueue.Enqueue(obstacle);
             }
         }
     }
 
-    // Rough stuff, for debug purposes only
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(Vector3.right * _playerCamera.GetCameraOrthographicBounds().max.x, 3);
-    }
-
-    //private Vector3 GetDistanceToLastObstacle()
-    //{
-    //    return 
-    //}
-
-    //[ExecuteAlways]
     private void SpawnInitialObstacles()
     {
-        Debug.Log("SpawnInitialObstacles()");
-
         for (int i = 0; i < _initialNumberOfObstacles; i++)
-        {
             SpawnNewObstacle();
-        }
     }
 
     private Obstacle SpawnNewObstacle()
     {
-        Vector3 newObstaclePosition = CalculateNewObstaclePosition();
+        Vector3 newObstaclePosition = CalculateObstacleNewPosition();
 
         Obstacle newObstacle = Instantiate(_obstacle, newObstaclePosition, Quaternion.identity);
 
         newObstacle.transform.SetParent(gameObject.transform, true);
         _spawnedObstaclesQueue.Enqueue(newObstacle);
 
-        newObstacle.GapSize = _obstacleGapSize;
-        SetObstacleRandomHeight(ref newObstacle);
 
-        Debug.Log("SpawnNewObstacle()\n\n", newObstacle);
+        newObstacle.GapSize = _obstacleGapSize;
+        newObstacle.GapMargin = _obstacleGapMargin;
+        newObstacle.Refresh();
+
         return newObstacle;
     }
 
-    private void SetObstacleRandomHeight(ref Obstacle obstacle)
-    {
-        obstacle.GapHeight = Random.Range(-1.0f, 1.0f);
-    }
-
-    private Vector3 CalculateNewObstaclePosition()
+    private Vector3 CalculateObstacleNewPosition()
     {
         if (_spawnedObstaclesQueue.Count == 0)
         {
-            return new Vector3(_playerCamera.GetCameraOrthographicBounds().max.x + _obstacleStartSpawnOffset, 0, 0);
+            return new Vector3(_firstObstacleStartSpawnPosition, 0, 0);
         }
         else
         {
             return new Vector3(_spawnedObstaclesQueue.Last().transform.position.x + _obstacleSpacing, 0, 0);
         }
     }
+
+    private void RestartGenerator()
+    {
+        DeleteOldObstacles();
+        SpawnInitialObstacles();
+    }
+
+    private void DeleteOldObstacles()
+    {
+        foreach (Obstacle obstacle in _spawnedObstaclesQueue)
+            Destroy(obstacle.gameObject);
+
+        _spawnedObstaclesQueue.Clear();
+    }
+
+    private void Init()
+    {
+        // Init variables
+        _spawnedObstaclesQueue = new Queue<Obstacle>();
+
+        _playerCamera = ProjectContext.Instance.PlayerCamera;
+        _pauseManager = ProjectContext.Instance.PauseManager;
+        _gameProcess = ProjectContext.Instance.GameProcess;
+
+        _firstObstacleStartSpawnPosition = GetCameraRightBorderPosition() + _obstacleStartSpawnOffset;
+
+        // Init events
+        _gameProcess.GameStateSwitched += OnGameStateSwitched;
+    }
+
+    private float GetCameraRightBorderPosition() => _playerCamera.GetCameraOrthographicBounds().max.x;
+
+    private void OnGameStateSwitched(GameState newGameState)
+    {
+        if (newGameState is MainMenuState)
+            RestartGenerator();
+    }
+
+    ///////////////////////////////////// Rough stuff, for debug purposes only /////////////////////////////////////
+    private void OnDrawGizmos()
+    {
+        if (Application.isPlaying) // I know it's bullshit...
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(Vector3.right * GetCameraRightBorderPosition(), 3);
+        }
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
